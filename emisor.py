@@ -1,22 +1,51 @@
-# Import socket module
-import socket			
 import bitarray
+import random
+import socket
 
-# Create a socket object
-s = socket.socket()		
 
-# Define the port on which you want to connect
-port = 12345				
+def enviar_cadena():
+    inp = input("Mensaje a enviar:\n")
+    return inp
 
-# connect to the server on local computer
-s.connect(('127.0.0.1', port))
+def verificacion(cadena):
+    a = bitarray.bitarray()
+    a.frombytes(cadena.encode('utf-8'))
+    print(a)
+    return a
+    #Decode: print(a.tobytes().decode('utf-8'))
 
-# receive data from the server
+def ruido(bitar):
+    b = bitarray.bitarray()
+    for i in bitar:
+        if random.random() < 0.05:
+            if i == 1:
+                i = 0
+            else:
+                i = 1
+            b.append(i)
+        else:
+            b.append(i)
+    return b
+
+
+# Create a socket object 
+s = socket.socket()         
+  
+# Define the port on which you want to connect 
+port = 12345                
+  
+# connect to the server on local computer 
+s.connect(('127.0.0.1', port)) 
+
+# receive data from the server 
 print (s.recv(1024) )
 
-a = bitarray.bitarray()
-a.frombytes('Hola'.encode('utf-8'))
-s.send(a) 
-# close the connection
-s.close()	
+#Get messages
+messages = enviar_cadena()
+toSend = ruido(verificacion(messages))
+# Send message
+s.sendall(toSend)
+
+# close the connection 
+s.close()     
 	
