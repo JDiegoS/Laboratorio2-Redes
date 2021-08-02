@@ -4,12 +4,15 @@
 import bitarray
 import socket
 
+wordstocheck = ["A","Hola", "Mundo", "Cubo", "1234", "PalabraLarga", "Ricardo", "Diego", "Valenzuela", "Solorzano", "Redes"]
+
 def recibir_cadena(cadena):
     print("\nEl mensaje recibido es: \n" + cadena)
     return
 
 def recibir_cadena_segura(cadena, opt):
     if opt == True:
+        print("--------Usando el Codigo de Hamming para corregir errores--------")
         size = len(cadena)
         check = BitsRedun(size)
         print("Se recibio:", cadena)
@@ -30,7 +33,18 @@ def recibir_cadena_segura(cadena, opt):
             print(cadena)
             resultado = cadena.tobytes().decode('utf-8')
     else:
-        pass
+        print("--------Usando Fletcher CheckSum para detectar errores--------")
+        isIncorrect = True
+        print(cadena)
+        cadenaCheck = fletcher32(cadena.tobytes())
+        for i in wordstocheck:
+            if  cadenaCheck== fletcher32(bytes(i, 'utf-8')):
+                isIncorrect = False
+        
+        if isIncorrect:
+            resultado = "Se detecto error mediante Checksum: "+str(cadenaCheck)
+        else:
+            resultado = cadena.tobytes().decode('utf-8')
     return resultado
 
 #Algoritmo de hamming para correcion de errores
@@ -56,6 +70,15 @@ def detectError(bitr, nr):
     else:
         return res
 
+#Checksum para deteccion de errores -- version de 32 bits
+def fletcher32(data):
+    sum1 = int()
+    sum2 = int()
+    for index in range(len(data)):
+        sum1 = (sum1 + data[index]) % 65535
+        sum2 = (sum2 + sum1) % 65535
+    result = (sum2 << 16) | sum1
+    return result
 
 
 #------------------------------Main---------------------------------------
@@ -73,6 +96,19 @@ print ("socket binded to %s" %(port))
 s.listen(5)     
 print ("socket is listening")            
   
+print("""---------Seleccion de algoritmo---------
+1. Correccion de errores - Codigo de Hamming
+2. Deteccion de errores - Fletcher checksum""")
+isHamming  = input("Seleccione su opcion:")
+
+if isHamming == "1":
+    isHamming = True
+elif isHamming == "2":
+    isHamming = False
+else:
+    print("dicha opcion no existe")
+    quit()
+
 # a forever loop until we interrupt it or 
 # an error occurs 
 while True: 
@@ -91,7 +127,7 @@ while True:
         print(data)
         a.frombytes(data)
         print(a)
-        res = recibir_cadena_segura(a, 1)
+        res = recibir_cadena_segura(a, isHamming)
         recibir_cadena(res)        
     # Close the connection with the client 
     c.close() 
